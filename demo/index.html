@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atlas Debug Suite - Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: white;
+        }
+
+        .demo-container {
+            max-width: 800px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            opacity: 0.9;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        button {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .info h2 {
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+
+        .info code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Courier New', monospace;
+        }
+
+        .info pre {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+
+        .badge {
+            display: inline-block;
+            background: rgba(100, 200, 255, 0.3);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            margin: 2px;
+        }
+    </style>
+    <!-- Import logger styles -->
+    <link rel="stylesheet" href="../src/style.css">
+</head>
+<body>
+    <div class="demo-container">
+        <h1>⚡ Atlas Debug Suite</h1>
+        <p class="subtitle">Visual Logging Panel Demo</p>
+
+        <div class="button-group">
+            <button onclick="demoInfo()">📝 Info Log</button>
+            <button onclick="demoSuccess()">✅ Success Log</button>
+            <button onclick="demoWarning()">⚠️ Warning Log</button>
+            <button onclick="demoError()">❌ Error Log</button>
+            <button onclick="demoTags()">🏷️ With Tags</button>
+            <button onclick="demoObject()">📦 Object Log</button>
+            <button onclick="demoClear()">🗑️ Clear</button>
+            <button onclick="demoCopy()">📋 Copy</button>
+            <button onclick="demoExport()">📥 Export</button>
+        </div>
+
+        <div class="info">
+            <h2>📚 Try it out!</h2>
+            <p>Click the buttons above to see logs appear in the panel (bottom-right).</p>
+            <p><strong>New features:</strong> Use filter buttons (ALL, INFO, SUCCESS, WARNING, ERROR) to show/hide specific log levels!</p>
+            <p>You can also use the console:</p>
+            <pre><code>gptLog('Hello from console!')
+gptLogInfo('Info message', ['tag1', 'tag2'])
+gptLogSuccess('Success!', ['achievement'])
+gptLogCopy()   // Copy visible logs to clipboard
+gptLogExport() // Export logs to JSON
+gptLogClear()  // Clear logs</code></pre>
+        </div>
+
+        <div class="info">
+            <h2>🚀 Features</h2>
+            <p>
+                <span class="badge">🪶 Zero Dependencies</span>
+                <span class="badge">🖥️ Draggable Panel</span>
+                <span class="badge">🌈 Color Coded</span>
+                <span class="badge">🏷️ Tag System</span>
+                <span class="badge">📥 JSON Export</span>
+                <span class="badge">💻 Console API</span>
+            </p>
+        </div>
+    </div>
+
+    <!-- Import logger -->
+    <script type="module">
+        import { 
+            gptLog, 
+            gptLogInfo, 
+            gptLogSuccess, 
+            gptLogWarn, 
+            gptLogError,
+            gptLogClear,
+            gptLogCopy,
+            gptLogExport
+        } from '../src/gptLogger.ts';
+
+        // Make functions globally available
+        window.gptLog = gptLog;
+        window.gptLogInfo = gptLogInfo;
+        window.gptLogSuccess = gptLogSuccess;
+        window.gptLogWarn = gptLogWarn;
+        window.gptLogError = gptLogError;
+        window.gptLogClear = gptLogClear;
+        window.gptLogCopy = gptLogCopy;
+        window.gptLogExport = gptLogExport;
+
+        // Demo functions
+        window.demoInfo = () => {
+            gptLogInfo('This is an info message', ['demo', 'info']);
+        };
+
+        window.demoSuccess = () => {
+            gptLogSuccess('Operation completed successfully!', ['demo', 'success']);
+        };
+
+        window.demoWarning = () => {
+            gptLogWarn('This is a warning message', ['demo', 'warning']);
+        };
+
+        window.demoError = () => {
+            gptLogError('Something went wrong!', ['demo', 'error', 'critical']);
+        };
+
+        window.demoTags = () => {
+            gptLog('Log with multiple tags', 'info', ['game', 'shard', 'progress', 'async']);
+        };
+
+        window.demoObject = () => {
+            gptLog({
+                user: 'John Doe',
+                score: 1234,
+                level: 5,
+                achievements: ['first', 'legendary']
+            }, 'success', ['demo', 'data']);
+        };
+
+        window.demoClear = () => {
+            gptLogClear();
+        };
+
+        window.demoCopy = () => {
+            gptLogCopy();
+        };
+
+        window.demoExport = () => {
+            gptLogExport();
+        };
+
+        // Initial welcome message
+        setTimeout(() => {
+            gptLogSuccess('🚀 Atlas Debug Suite Demo Loaded!', ['demo', 'init']);
+            gptLog('Try clicking the buttons above or use the console API', 'info', ['demo', 'tip']);
+        }, 500);
+    </script>
+</body>
+</html>
+
+

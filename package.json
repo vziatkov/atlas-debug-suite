@@ -1,0 +1,16 @@
+{
+  "name": "atlas-debug-suite",
+  "version": "1.1.0",
+  "description": "Lightweight visual logging panel for browser-based apps",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vite": "^7.1.7"
+  }
+}

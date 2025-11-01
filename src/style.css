@@ -1,0 +1,278 @@
+/* Atlas Debug Suite - Logger Styles */
+
+/* GPT Debug Logger Panel */
+#gpt-logger {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 400px;
+  max-width: calc(100vw - 40px);
+  max-height: 400px;
+  background: rgba(0, 0, 0, 0.9);
+  border: 2px solid rgba(100, 200, 255, 0.3);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  z-index: 10000;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+#gpt-logger.collapsed {
+  height: auto;
+}
+
+#gpt-logger.expanded {
+  height: 400px;
+}
+
+#gpt-logger-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(100, 200, 255, 0.1);
+  border-bottom: 1px solid rgba(100, 200, 255, 0.2);
+  border-radius: 10px 10px 0 0;
+  cursor: move;
+  user-select: none;
+}
+
+/* Фильтры */
+#gpt-logger-filters {
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid rgba(100, 200, 255, 0.1);
+  flex-wrap: wrap;
+}
+
+.gpt-logger-filter-btn {
+  background: rgba(100, 200, 255, 0.1);
+  border: 1px solid rgba(100, 200, 255, 0.2);
+  color: rgba(100, 200, 255, 0.7);
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  transition: all 0.2s ease;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+}
+
+.gpt-logger-filter-btn:hover {
+  background: rgba(100, 200, 255, 0.2);
+  transform: scale(1.05);
+}
+
+.gpt-logger-filter-btn.active {
+  background: rgba(100, 200, 255, 0.3);
+  border-color: rgba(100, 200, 255, 0.5);
+  color: #64c8ff;
+  box-shadow: 0 0 8px rgba(100, 200, 255, 0.3);
+}
+
+/* Цвета для разных уровней фильтров */
+.gpt-logger-filter-btn[data-level="info"].active {
+  background: rgba(100, 200, 255, 0.3);
+  border-color: #64c8ff;
+  color: #64c8ff;
+}
+
+.gpt-logger-filter-btn[data-level="success"].active {
+  background: rgba(0, 255, 0, 0.2);
+  border-color: #0f0;
+  color: #0f0;
+}
+
+.gpt-logger-filter-btn[data-level="warning"].active {
+  background: rgba(255, 165, 0, 0.2);
+  border-color: #ffa500;
+  color: #ffa500;
+}
+
+.gpt-logger-filter-btn[data-level="error"].active {
+  background: rgba(255, 68, 68, 0.2);
+  border-color: #f44;
+  color: #f44;
+}
+
+.gpt-logger-filter-btn[data-level="all"].active {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: #fff;
+}
+
+#gpt-logger-title {
+  color: #64c8ff;
+  font-weight: 600;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#gpt-logger-title::before {
+  content: '🤖';
+  font-size: 14px;
+}
+
+#gpt-logger-controls {
+  display: flex;
+  gap: 6px;
+}
+
+#gpt-logger-btn {
+  background: rgba(100, 200, 255, 0.2);
+  border: 1px solid rgba(100, 200, 255, 0.3);
+  color: #64c8ff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  transition: all 0.2s ease;
+}
+
+#gpt-logger-btn:hover {
+  background: rgba(100, 200, 255, 0.3);
+  transform: scale(1.05);
+}
+
+#gpt-logger-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 12px;
+  color: #0f0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  scroll-behavior: smooth;
+}
+
+#gpt-logger-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+#gpt-logger-content::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+
+#gpt-logger-content::-webkit-scrollbar-thumb {
+  background: rgba(100, 200, 255, 0.3);
+  border-radius: 3px;
+}
+
+#gpt-logger-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 200, 255, 0.5);
+}
+
+#gpt-logger-content .log-entry {
+  margin-bottom: 4px;
+  padding: 2px 0;
+  border-left: 2px solid transparent;
+  padding-left: 8px;
+  animation: fadeIn 0.2s ease;
+}
+
+#gpt-logger-content .log-entry.info {
+  border-left-color: #64c8ff;
+  color: #64c8ff;
+}
+
+#gpt-logger-content .log-entry.success {
+  border-left-color: #0f0;
+  color: #0f0;
+}
+
+#gpt-logger-content .log-entry.warning {
+  border-left-color: #ffa500;
+  color: #ffa500;
+}
+
+#gpt-logger-content .log-entry.error {
+  border-left-color: #f44;
+  color: #f44;
+}
+
+#gpt-logger-content .log-time {
+  color: #888;
+  font-size: 10px;
+  margin-right: 6px;
+}
+
+#gpt-logger-content .log-badge {
+  display: inline-block;
+  background: rgba(100, 200, 255, 0.2);
+  border: 1px solid rgba(100, 200, 255, 0.4);
+  color: #64c8ff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 600;
+  margin-right: 4px;
+  margin-left: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: help;
+  transition: all 0.2s ease;
+}
+
+#gpt-logger-content .log-badge:hover {
+  background: rgba(100, 200, 255, 0.3);
+  transform: scale(1.05);
+}
+
+#gpt-logger-content .log-entry.success .log-badge {
+  background: rgba(0, 255, 0, 0.15);
+  border-color: rgba(0, 255, 0, 0.3);
+  color: #0f0;
+}
+
+#gpt-logger-content .log-entry.warning .log-badge {
+  background: rgba(255, 165, 0, 0.15);
+  border-color: rgba(255, 165, 0, 0.3);
+  color: #ffa500;
+}
+
+#gpt-logger-content .log-entry.error .log-badge {
+  background: rgba(255, 68, 68, 0.15);
+  border-color: rgba(255, 68, 68, 0.3);
+  color: #f44;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Mobile адаптация */
+@media (max-width: 768px) {
+  #gpt-logger {
+    width: calc(100vw - 40px);
+    max-width: calc(100vw - 40px);
+    bottom: 10px;
+    right: 10px;
+    left: 10px;
+    max-height: 250px;
+  }
+  
+  #gpt-logger.expanded {
+    height: 250px;
+  }
+  
+  #gpt-logger-content {
+    font-size: 11px;
+  }
+}
