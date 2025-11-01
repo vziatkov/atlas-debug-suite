@@ -26,8 +26,8 @@ The deployment workflow triggers when any of these files change:
    - Outputs production-ready files to `dist/` folder
 
 2. **Deploy Phase**
-   - Pushes built files to `gh-pages` branch
-   - GitHub Pages automatically serves from this branch
+   - Uploads built files as GitHub Pages artifact
+   - Deploys artifact to GitHub Pages using official actions
    - Changes are live within 1-2 minutes
 
 ## 🔧 Configuration Files
@@ -40,9 +40,10 @@ The deployment workflow triggers when any of these files change:
 
 ### `.github/workflows/demo.yml`
 - GitHub Actions workflow for CI/CD
-- Uses `peaceiris/actions-gh-pages@v4` for deployment
+- Uses official GitHub Pages actions (`actions/upload-pages-artifact` and `actions/deploy-pages`)
 - Includes proper permissions for GitHub Pages
 - Implements concurrency controls
+- Split into separate build and deploy jobs for better reliability
 
 ## 🛠️ Local Testing
 
@@ -92,9 +93,10 @@ These are configured in the workflow file and granted automatically by GitHub Ac
 - Verify TypeScript files compile without errors
 
 ### Deployment Fails
-- Verify GitHub Pages is enabled in repository settings
+- Verify GitHub Pages is enabled in repository settings (Settings → Pages)
+- Ensure "Source" is set to "GitHub Actions" (not "Deploy from a branch")
 - Check workflow has proper permissions
-- Ensure `gh-pages` branch exists (created automatically on first deploy)
+- Verify the workflow completed successfully in the Actions tab
 
 ### Site Not Loading
 - Wait 1-2 minutes after deployment completes
