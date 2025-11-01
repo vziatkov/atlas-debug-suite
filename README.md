@@ -9,6 +9,8 @@ Perfect for Vite, Svelte, PixiJS or any SPA setup — no console switching, logs
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)
 
+**[🎮 Try Live Demo](https://vziatkov.github.io/atlas-debug-suite/)**
+
 ---
 
 ## 🚀 Features
