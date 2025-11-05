@@ -163,7 +163,12 @@ gptLogClear()  // Clear logs</code></pre>
             gptLogError,
             gptLogClear,
             gptLogCopy,
-            gptLogExport
+            gptLogExport,
+            gptLogGroup,
+            gptLogGroupEnd,
+            gptTimer,
+            gptTimerEnd,
+            gptAIDialog
         } from '../src/gptLogger.ts';
 
         // Make functions globally available
@@ -175,6 +180,11 @@ gptLogClear()  // Clear logs</code></pre>
         window.gptLogClear = gptLogClear;
         window.gptLogCopy = gptLogCopy;
         window.gptLogExport = gptLogExport;
+        window.gptLogGroup = gptLogGroup;
+        window.gptLogGroupEnd = gptLogGroupEnd;
+        window.gptTimer = gptTimer;
+        window.gptTimerEnd = gptTimerEnd;
+        window.gptAIDialog = gptAIDialog;
 
         // Demo functions
         window.demoInfo = () => {
@@ -218,10 +228,43 @@ gptLogClear()  // Clear logs</code></pre>
             gptLogExport();
         };
 
-        // Initial welcome message
+        // Demo script with sample logs
+        function runDemoScript() {
+            // Группа инициализации
+            gptLogGroup('Инициализация');
+            gptLogInfo('Загрузка модулей...', ['init', 'loader']);
+            gptLogSuccess('Модуль данных загружен', ['init', 'data']);
+            gptLogWarn('Модуль UI отвечает медленно', ['init', 'ui']);
+            gptLogGroupEnd('Инициализация');
+
+            // Таймер для имитации операции
+            gptTimer('fetch');
+            setTimeout(() => {
+                gptTimerEnd('fetch');
+                gptLogSuccess('Данные получены', ['network', 'success']);
+            }, 800);
+
+            // Эмуляция ошибки
+            gptLogError('Ошибка: таймаут при подключении к API', ['network', 'error']);
+
+            // Диалог с ИИ (пример для AI‑логов)
+            gptAIDialog('Сколько будет 2+2?', 'Ответ: 4', 120);
+
+            // Дополнительные произвольные сообщения
+            ['info','success','warning','error'].forEach((level, idx) => {
+                gptLog(`Сообщение #${idx + 1} уровня ${level}`, level, ['demo']);
+            });
+        }
+
+        // Initial welcome message and demo script
         setTimeout(() => {
             gptLogSuccess('🚀 Atlas Debug Suite Demo Loaded!', ['demo', 'init']);
             gptLog('Try clicking the buttons above or use the console API', 'info', ['demo', 'tip']);
+            
+            // Run demo script after a short delay
+            setTimeout(() => {
+                runDemoScript();
+            }, 1000);
         }, 500);
     </script>
 </body>
