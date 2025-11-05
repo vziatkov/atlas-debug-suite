@@ -1,6 +1,6 @@
 {
   "name": "atlas-debug-suite",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Lightweight visual logging panel for browser-based apps",
   "private": true,
   "type": "module",

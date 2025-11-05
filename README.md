@@ -5,7 +5,7 @@ Perfect for Vite, Svelte, PixiJS or any SPA setup — no console switching, logs
 
 > 🎯 **Atlas Debug Suite** — professional debugging toolkit with tags, export, and beautiful UI
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)
 
@@ -18,9 +18,18 @@ Perfect for Vite, Svelte, PixiJS or any SPA setup — no console switching, logs
 - 🪶 **Zero dependencies** — just import and go  
 - 🖥️ **Floating draggable log panel** — move it anywhere  
 - 🌈 **Color-coded levels**: info, success, warning, error  
-- 🏷️ **Tag system** — organize logs with badges  
+- 🏷️ **Tag system** — organize logs with clickable badges  
+- 🎯 **Smart filtering** — filter by level and tags  
 - 📥 **Export to JSON** — save and analyze logs  
-- 🔄 **Auto-scroll and log limit** — stays performant  
+- 📋 **Copy to clipboard** — copy visible logs  
+- 🔄 **Auto-scroll** — smooth scrolling to new logs  
+- 🎨 **Dark/Light themes** — toggle with button or `Ctrl+Shift+T`  
+- ⌨️ **Keyboard shortcuts** — power user features  
+- 📦 **Collapsible objects** — click to expand JSON  
+- 📁 **Log groups** — organize related logs  
+- ⏱️ **Timers** — measure performance  
+- 🤖 **AI dialog support** — log prompts/responses with latency  
+- 📡 **Realtime sync** — sync logs across browser tabs  
 - 💻 **Browser console API** — works from DevTools  
 - 🎨 **Fully customizable** — CSS variables and themes  
 - 📱 **Mobile responsive** — works on all devices  
@@ -62,14 +71,41 @@ gptLogError('Worker failed');
 gptLog('Shard completed', 'info', ['shard', 'progress']);
 gptLogSuccess('New record!', ['game', 'achievement']);
 gptLogError('Worker crashed', ['worker', 'error', 'critical']);
+
+// Click on any tag badge to filter by that tag!
+```
+
+### Advanced Features
+```typescript
+// Groups (like console.group)
+gptLogGroup('Initialization');
+gptLogInfo('Step 1', ['init']);
+gptLogSuccess('Step 2', ['init']);
+gptLogGroupEnd('Initialization');
+
+// Performance timers
+gptTimer('data-load');
+// ... async operation ...
+gptTimerEnd('data-load'); // Logs duration
+
+// AI dialogs with latency tracking
+gptAIDialog(
+  'User prompt',
+  'AI response',
+  1234 // latency in ms
+);
 ```
 
 ### From Browser Console
 ```javascript
 gptLog('Hello from console!');
 gptLogInfo('Debug info', ['console', 'debug']);
-gptLogExport(); // Export logs as JSON
-gptLogClear();  // Clear all logs
+gptLogCopy();    // Copy visible logs (Ctrl+Shift+C)
+gptLogExport();  // Export logs as JSON (Ctrl+E)
+gptLogClear();   // Clear all logs (Ctrl+L)
+
+// Click tags in the panel to filter!
+// Use theme button (🌙) to toggle dark/light mode
 ```
 
 ### Export Logs
@@ -149,8 +185,23 @@ Modify `gptLogger.ts`:
 | `gptLogSuccess(message, tags?)` | Success level | `message: any`, `tags?: string[]` |
 | `gptLogWarn(message, tags?)` | Warning level | `message: any`, `tags?: string[]` |
 | `gptLogError(message, tags?)` | Error level | `message: any`, `tags?: string[]` |
+| `gptLogGroup(title)` | Start log group | `title: string` |
+| `gptLogGroupEnd(title)` | End log group | `title: string` |
+| `gptTimer(name)` | Start performance timer | `name: string` |
+| `gptTimerEnd(name)` | End timer and log duration | `name: string` |
+| `gptAIDialog(prompt, response, latency?)` | Log AI dialog | `prompt: string`, `response: string`, `latency?: number` |
 | `gptLogClear()` | Clear all logs | - |
+| `gptLogCopy()` | Copy visible logs to clipboard | - |
 | `gptLogExport()` | Export logs to JSON | - |
+
+### Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl/Cmd + L` | Clear logs |
+| `Ctrl/Cmd + Shift + C` | Copy visible logs |
+| `Ctrl/Cmd + E` | Export logs |
+| `Ctrl/Cmd + Shift + T` | Toggle theme |
 
 ---
 

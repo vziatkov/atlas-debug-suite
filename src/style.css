@@ -257,6 +257,93 @@
   }
 }
 
+/* Свёртываемые объекты */
+.log-toggle {
+  user-select: none;
+}
+
+.log-toggle:hover {
+  opacity: 0.8;
+}
+
+.log-expanded {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* Светлая тема */
+#gpt-logger[data-theme="light"] {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(0, 0, 0, 0.2);
+  color: #333;
+}
+
+#gpt-logger[data-theme="light"] #gpt-logger-header {
+  background: rgba(0, 0, 0, 0.05);
+  border-bottom-color: rgba(0, 0, 0, 0.1);
+}
+
+#gpt-logger[data-theme="light"] #gpt-logger-title {
+  color: #0066cc;
+}
+
+#gpt-logger[data-theme="light"] #gpt-logger-content {
+  color: #333;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+#gpt-logger[data-theme="light"] .log-entry.info {
+  color: #0066cc;
+  border-left-color: #0066cc;
+}
+
+#gpt-logger[data-theme="light"] .log-entry.success {
+  color: #00aa44;
+  border-left-color: #00aa44;
+}
+
+#gpt-logger[data-theme="light"] .log-entry.warning {
+  color: #ff8800;
+  border-left-color: #ff8800;
+}
+
+#gpt-logger[data-theme="light"] .log-entry.error {
+  color: #cc0000;
+  border-left-color: #cc0000;
+}
+
+#gpt-logger[data-theme="light"] .log-time {
+  color: #666;
+}
+
+#gpt-logger[data-theme="light"] .log-badge {
+  background: rgba(0, 102, 204, 0.1);
+  border-color: rgba(0, 102, 204, 0.3);
+  color: #0066cc;
+}
+
+#gpt-logger[data-theme="light"] .log-expanded {
+  background: rgba(0, 0, 0, 0.05);
+  color: #333;
+}
+
+#gpt-logger[data-theme="light"] #gpt-logger-filters {
+  background: rgba(0, 0, 0, 0.05);
+  border-bottom-color: rgba(0, 0, 0, 0.1);
+}
+
+#gpt-logger[data-theme="light"] .gpt-logger-filter-btn {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.2);
+  color: #666;
+}
+
+#gpt-logger[data-theme="light"] #gpt-logger-btn {
+  background: rgba(0, 0, 0, 0.1);
+  border-color: rgba(0, 0, 0, 0.2);
+  color: #333;
+}
+
 /* Mobile адаптация */
 @media (max-width: 768px) {
   #gpt-logger {

@@ -39,6 +39,12 @@ class GPTLogger {
   private allTags = new Set<string>();
   private visibleLevels: Set<LogLevel | 'all'> = new Set(['all']);
   private filterButtons: Map<string, HTMLButtonElement> = new Map();
+  private theme: 'dark' | 'light' = 'dark';
+  private activeGroups: Map<string, HTMLElement> = new Map();
+  private timers: Map<string, number> = new Map();
+  private activeTagFilter: string | null = null;
+  private broadcastChannel: BroadcastChannel | null = null;
+  private realtimeEnabled: boolean = false;
 
   constructor() {
     this.init();
@@ -72,6 +78,12 @@ class GPTLogger {
     copyBtn.title = 'Copy visible logs to clipboard';
     copyBtn.onclick = () => this.copyVisibleLogs();
     
+    const themeBtn = document.createElement('button');
+    themeBtn.id = 'gpt-logger-btn';
+    themeBtn.textContent = '🌙';
+    themeBtn.title = 'Toggle theme';
+    themeBtn.onclick = () => this.toggleTheme();
+    
     const exportBtn = document.createElement('button');
     exportBtn.id = 'gpt-logger-btn';
     exportBtn.textContent = 'Export';
@@ -85,6 +97,7 @@ class GPTLogger {
     
     controls.appendChild(clearBtn);
     controls.appendChild(copyBtn);
+    controls.appendChild(themeBtn);
     controls.appendChild(exportBtn);
     controls.appendChild(toggleBtn);
     
@@ -133,8 +146,17 @@ class GPTLogger {
       if (toggleBtn) toggleBtn.textContent = '+';
     }
     
+    // Применяем тему
+    this.applyTheme();
+    
     // Делаем панель перетаскиваемой
     this.makeDraggable(header, container);
+    
+    // Инициализируем клавиатурные хоткеи
+    this.initKeyboardShortcuts();
+    
+    // Инициализируем realtime режим (BroadcastChannel)
+    this.initRealtime();
     
     // Первое сообщение
     this.log('GPT Logger initialized', 'success');
@@ -186,15 +208,20 @@ class GPTLogger {
     });
   }
 
-  private formatMessage(message: any): string {
+  private formatMessage(message: any): { text: string; isObject: boolean; json?: string } {
     if (typeof message === 'object' && message !== null) {
       try {
-        return JSON.stringify(message, null, 2);
+        const json = JSON.stringify(message, null, 2);
+        return { 
+          text: Object.keys(message).length === 0 ? '{}' : `{${Object.keys(message).length} keys}`,
+          isObject: true,
+          json: json
+        };
       } catch {
-        return String(message);
+        return { text: String(message), isObject: false };
       }
     }
-    return String(message);
+    return { text: String(message), isObject: false };
   }
 
   private getTimeString(): string {
@@ -206,10 +233,10 @@ class GPTLogger {
     return `${hours}:${minutes}:${seconds}.${ms}`;
   }
 
-  log(message: any, level: LogLevel = 'info', tags?: string[]): void {
+  log(message: any, level: LogLevel = 'info', tags?: string[], skipBroadcast: boolean = false): void {
     if (!this.content) return;
 
-    const formattedMessage = this.formatMessage(message);
+    const formatted = this.formatMessage(message);
     const time = this.getTimeString();
     const timestamp = Date.now();
 
@@ -219,7 +246,7 @@ class GPTLogger {
     }
 
     const entry: LogEntry = {
-      message: formattedMessage,
+      message: formatted.isObject ? formatted.json! : formatted.text,
       level,
       time,
       timestamp,
@@ -242,37 +269,91 @@ class GPTLogger {
     timeSpan.className = 'log-time';
     timeSpan.textContent = `[${time}]`;
     
-    // Добавляем бейджи тегов
+      // Добавляем бейджи тегов (кликабельные для фильтрации)
     if (tags && tags.length > 0) {
       tags.forEach(tag => {
         const badge = document.createElement('span');
         badge.className = 'log-badge';
         badge.textContent = tag;
-        badge.title = `Tag: ${tag}`;
+        badge.title = `Click to filter by tag: ${tag}`;
+        badge.style.cursor = 'pointer';
+        badge.onclick = (e) => {
+          e.stopPropagation();
+          this.toggleTagFilter(tag);
+        };
         logEntry.appendChild(badge);
       });
     }
     
-    const messageSpan = document.createElement('span');
-    messageSpan.textContent = formattedMessage;
+    // Создаём контейнер для сообщения
+    const messageContainer = document.createElement('span');
+    
+    if (formatted.isObject && formatted.json) {
+      // Свёртываемый объект
+      const toggleBtn = document.createElement('span');
+      toggleBtn.className = 'log-toggle';
+      toggleBtn.textContent = formatted.text;
+      toggleBtn.style.cursor = 'pointer';
+      toggleBtn.style.marginRight = '4px';
+      toggleBtn.style.fontWeight = 'bold';
+      
+      const expandedContent = document.createElement('pre');
+      expandedContent.className = 'log-expanded';
+      expandedContent.textContent = formatted.json;
+      expandedContent.style.display = 'none';
+      expandedContent.style.margin = '4px 0 0 20px';
+      expandedContent.style.padding = '8px';
+      expandedContent.style.background = 'rgba(0, 0, 0, 0.3)';
+      expandedContent.style.borderRadius = '4px';
+      expandedContent.style.fontSize = '11px';
+      expandedContent.style.overflowX = 'auto';
+      
+      let isExpanded = false;
+      toggleBtn.onclick = () => {
+        isExpanded = !isExpanded;
+        expandedContent.style.display = isExpanded ? 'block' : 'none';
+        toggleBtn.textContent = isExpanded ? '▼ ' + formatted.text : '▶ ' + formatted.text;
+      };
+      
+      messageContainer.appendChild(toggleBtn);
+      messageContainer.appendChild(expandedContent);
+    } else {
+      messageContainer.textContent = formatted.text;
+    }
     
     logEntry.appendChild(timeSpan);
-    logEntry.appendChild(messageSpan);
+    logEntry.appendChild(messageContainer);
     
-    this.content.appendChild(logEntry);
+    // Добавляем в активную группу или в основной контент
+    const activeGroup = this.activeGroups.size > 0 
+      ? Array.from(this.activeGroups.values())[this.activeGroups.size - 1]
+      : null;
+    
+    if (activeGroup) {
+      activeGroup.appendChild(logEntry);
+    } else {
+      this.content.appendChild(logEntry);
+    }
     
     // Применяем фильтры к новому элементу
     this.applyFiltersToElement(logEntry, level);
     
-    // Автопрокрутка вниз
-    this.content.scrollTop = this.content.scrollHeight;
+    // Улучшенная автопрокрутка вниз
+    if (this.content.scrollHeight - this.content.scrollTop < this.content.clientHeight + 100) {
+      logEntry.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
     
     // Также выводим в консоль для удобства
     const consoleMethod = level === 'error' ? 'error' : 
                          level === 'warning' ? 'warn' : 
                          'log';
     const tagStr = tags && tags.length > 0 ? `[${tags.join(', ')}] ` : '';
-    console[consoleMethod](`[GPT Log] ${tagStr}${formattedMessage}`);
+    console[consoleMethod](`[GPT Log] ${tagStr}${formatted.isObject ? formatted.json! : formatted.text}`);
+    
+    // Отправляем в другие вкладки (realtime), только если это не сообщение из другой вкладки
+    if (!skipBroadcast) {
+      this.broadcastLog(message, level, tags);
+    }
   }
 
   toggleFilter(level: LogLevel | 'all'): void {
@@ -338,7 +419,23 @@ class GPTLogger {
   }
   
   private applyFiltersToElement(element: HTMLElement, level: LogLevel): void {
-    const shouldShow = this.visibleLevels.has('all') || this.visibleLevels.has(level);
+    // Проверяем фильтр по уровню
+    const levelMatch = this.visibleLevels.has('all') || this.visibleLevels.has(level);
+    
+    // Проверяем фильтр по тегу
+    let tagMatch = true;
+    if (this.activeTagFilter) {
+      const badges = element.querySelectorAll('.log-badge');
+      tagMatch = false;
+      badges.forEach(badge => {
+        if (badge.textContent === this.activeTagFilter) {
+          tagMatch = true;
+        }
+      });
+    }
+    
+    const shouldShow = levelMatch && tagMatch;
+    
     if (shouldShow) {
       element.style.display = '';
       element.style.opacity = '0';
@@ -351,9 +448,111 @@ class GPTLogger {
     }
   }
   
+  toggleTagFilter(tag: string): void {
+    if (this.activeTagFilter === tag) {
+      this.activeTagFilter = null;
+      this.log(`Tag filter cleared`, 'info');
+    } else {
+      this.activeTagFilter = tag;
+      this.log(`Filtering by tag: ${tag}`, 'info');
+    }
+    this.applyFilters();
+  }
+  
+  // Группировка логов
+  startGroup(title: string): void {
+    if (!this.content) return;
+    
+    const groupContainer = document.createElement('div');
+    groupContainer.className = 'log-group';
+    groupContainer.dataset.groupTitle = title;
+    
+    const groupHeader = document.createElement('div');
+    groupHeader.className = 'log-group-header';
+    groupHeader.textContent = `▼ ${title}`;
+    groupHeader.style.cssText = `
+      padding: 4px 8px;
+      background: rgba(100, 200, 255, 0.1);
+      border-left: 3px solid #64c8ff;
+      cursor: pointer;
+      font-weight: 600;
+      margin-top: 4px;
+    `;
+    
+    const groupContent = document.createElement('div');
+    groupContent.className = 'log-group-content';
+    groupContent.style.cssText = `
+      margin-left: 12px;
+      border-left: 2px solid rgba(100, 200, 255, 0.2);
+      padding-left: 8px;
+    `;
+    
+    let isCollapsed = false;
+    groupHeader.onclick = () => {
+      isCollapsed = !isCollapsed;
+      groupContent.style.display = isCollapsed ? 'none' : 'block';
+      groupHeader.textContent = (isCollapsed ? '▶' : '▼') + ' ' + title;
+    };
+    
+    groupContainer.appendChild(groupHeader);
+    groupContainer.appendChild(groupContent);
+    this.content.appendChild(groupContainer);
+    
+    this.activeGroups.set(title, groupContent);
+  }
+  
+  endGroup(title: string): void {
+    this.activeGroups.delete(title);
+  }
+  
+  // Таймеры
+  timer(name: string): void {
+    this.timers.set(name, performance.now());
+    this.log(`⏱️ Timer "${name}" started`, 'info', ['timer', 'start']);
+  }
+  
+  timerEnd(name: string): void {
+    const startTime = this.timers.get(name);
+    if (startTime) {
+      const duration = (performance.now() - startTime).toFixed(2);
+      this.timers.delete(name);
+      this.log(`⏱️ Timer "${name}": ${duration}ms`, 'success', ['timer', 'end']);
+    } else {
+      this.log(`⚠️ Timer "${name}" not found`, 'warning', ['timer', 'error']);
+    }
+  }
+  
+  // AI диалоги с latency
+  aiDialog(prompt: string, response: string, latency?: number): void {
+    const latencyMs = latency !== undefined ? latency : 0;
+    const latencyStr = latencyMs > 0 ? ` (${latencyMs}ms)` : '';
+    
+    // Группа для AI диалога
+    this.startGroup(`🤖 AI Dialog${latencyStr}`);
+    
+    this.log(`💬 Prompt: ${prompt}`, 'info', ['ai', 'prompt']);
+    this.log(`💭 Response: ${response}`, 'success', ['ai', 'response']);
+    
+    if (latencyMs > 0) {
+      const latencyLevel = latencyMs < 1000 ? 'success' : latencyMs < 3000 ? 'warning' : 'error';
+      this.log(`⚡ Latency: ${latencyMs}ms`, latencyLevel, ['ai', 'latency']);
+    }
+    
+    this.endGroup(`🤖 AI Dialog${latencyStr}`);
+  }
+  
   copyVisibleLogs(): void {
     const visibleLogs = this.logs.filter(log => {
-      return this.visibleLevels.has('all') || this.visibleLevels.has(log.level);
+      // Проверяем уровень
+      const levelMatch = this.visibleLevels.has('all') || this.visibleLevels.has(log.level);
+      
+      // Проверяем тег
+      let tagMatch = true;
+      if (this.activeTagFilter) {
+        tagMatch = !!(log.tags && log.tags.includes(this.activeTagFilter));
+      }
+      
+      return levelMatch && tagMatch;
     });
     
     const text = visibleLogs.map(log => {
@@ -372,7 +571,8 @@ class GPTLogger {
     try {
       const state = {
         expanded: this.isExpanded,
-        visibleLevels: Array.from(this.visibleLevels)
+        visibleLevels: Array.from(this.visibleLevels),
+        theme: this.theme
       };
       localStorage.setItem('atlas-debug-suite-state', JSON.stringify(state));
     } catch (e) {
@@ -386,6 +586,7 @@ class GPTLogger {
       if (saved) {
         const state = JSON.parse(saved);
         this.isExpanded = state.expanded !== false;
+        this.theme = state.theme || 'dark';
         if (state.visibleLevels) {
           this.visibleLevels = new Set(state.visibleLevels);
           // Обновляем UI кнопок
@@ -402,6 +603,95 @@ class GPTLogger {
       }
     } catch (e) {
       // Игнорируем ошибки localStorage
+    }
+  }
+  
+  toggleTheme(): void {
+    this.theme = this.theme === 'dark' ? 'light' : 'dark';
+    this.applyTheme();
+    this.saveState();
+  }
+  
+  private applyTheme(): void {
+    if (!this.container) return;
+    
+    this.container.setAttribute('data-theme', this.theme);
+    
+    // Обновляем кнопку темы
+    const themeBtn = this.container.querySelector('#gpt-logger-controls button:nth-child(3)') as HTMLButtonElement;
+    if (themeBtn) {
+      themeBtn.textContent = this.theme === 'dark' ? '🌙' : '☀️';
+    }
+  }
+  
+  private initKeyboardShortcuts(): void {
+    document.addEventListener('keydown', (e) => {
+      // Проверяем что не в input/textarea
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+      
+      // Ctrl+L или Cmd+L - Clear
+      if ((e.ctrlKey || e.metaKey) && e.key === 'l') {
+        e.preventDefault();
+        this.clear();
+      }
+      
+      // Ctrl+Shift+C или Cmd+Shift+C - Copy
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'C') {
+        e.preventDefault();
+        this.copyVisibleLogs();
+      }
+      
+      // Ctrl+E или Cmd+E - Export
+      if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+        e.preventDefault();
+        this.exportLogs();
+      }
+      
+      // Ctrl+T или Cmd+T - Toggle theme
+      if ((e.ctrlKey || e.metaKey) && e.key === 't' && e.shiftKey) {
+        e.preventDefault();
+        this.toggleTheme();
+      }
+    });
+  }
+  
+  private initRealtime(): void {
+    try {
+      if ('BroadcastChannel' in window) {
+        this.broadcastChannel = new BroadcastChannel('atlas-debug-suite');
+        this.realtimeEnabled = true;
+        
+        // Слушаем сообщения от других вкладок
+        this.broadcastChannel.onmessage = (event) => {
+          if (event.data.type === 'log') {
+            const { message, level, tags } = event.data;
+            // skipBroadcast = true, чтобы не создавать цикл
+            this.log(message, level, tags, true);
+          }
+        };
+        
+        this.log('📡 Realtime mode enabled (BroadcastChannel)', 'success', ['realtime']);
+      }
+    } catch (e) {
+      // BroadcastChannel не поддерживается
+    }
+  }
+  
+  // Отправка логов в другие вкладки
+  private broadcastLog(message: any, level: LogLevel, tags?: string[]): void {
+    if (this.realtimeEnabled && this.broadcastChannel) {
+      try {
+        this.broadcastChannel.postMessage({
+          type: 'log',
+          message: typeof message === 'object' ? JSON.stringify(message) : String(message),
+          level,
+          tags: tags || []
+        });
+      } catch (e) {
+        // Игнорируем ошибки
+      }
     }
   }
 
@@ -434,7 +724,7 @@ class GPTLogger {
 
   exportLogs(): void {
     const exportData = {
-      version: '1.1.0',
+      version: '1.2.0',
       exportedAt: new Date().toISOString(),
       totalLogs: this.logs.length,
       tags: Array.from(this.allTags),
@@ -465,19 +755,19 @@ class GPTLogger {
 
   // Удобные методы
   info(message: any, tags?: string[]): void {
-    this.log(message, 'info', tags);
+    this.log(message, 'info', tags, false);
   }
 
   success(message: any, tags?: string[]): void {
-    this.log(message, 'success', tags);
+    this.log(message, 'success', tags, false);
   }
 
   warn(message: any, tags?: string[]): void {
-    this.log(message, 'warning', tags);
+    this.log(message, 'warning', tags, false);
   }
 
   error(message: any, tags?: string[]): void {
-    this.log(message, 'error', tags);
+    this.log(message, 'error', tags, false);
   }
 }
 
@@ -496,6 +786,11 @@ export const gptLogError = (message: any, tags?: string[]) => gptLogger.error(me
 export const gptLogClear = () => gptLogger.clear();
 export const gptLogExport = () => gptLogger.exportLogs();
 export const gptLogCopy = () => gptLogger.copyVisibleLogs();
+export const gptLogGroup = (title: string) => gptLogger.startGroup(title);
+export const gptLogGroupEnd = (title: string) => gptLogger.endGroup(title);
+export const gptTimer = (name: string) => gptLogger.timer(name);
+export const gptTimerEnd = (name: string) => gptLogger.timerEnd(name);
+export const gptAIDialog = (prompt: string, response: string, latency?: number) => gptLogger.aiDialog(prompt, response, latency);
 
 // Также добавляем в window для использования из консоли
 declare global {
@@ -508,6 +803,11 @@ declare global {
     gptLogClear: typeof gptLogClear;
     gptLogExport: typeof gptLogExport;
     gptLogCopy: typeof gptLogCopy;
+    gptLogGroup: typeof gptLogGroup;
+    gptLogGroupEnd: typeof gptLogGroupEnd;
+    gptTimer: typeof gptTimer;
+    gptTimerEnd: typeof gptTimerEnd;
+    gptAIDialog: typeof gptAIDialog;
   }
 }
 
@@ -519,4 +819,9 @@ window.gptLogError = gptLogError;
 window.gptLogClear = gptLogClear;
 window.gptLogExport = gptLogExport;
 window.gptLogCopy = gptLogCopy;
+window.gptLogGroup = gptLogGroup;
+window.gptLogGroupEnd = gptLogGroupEnd;
+window.gptTimer = gptTimer;
+window.gptTimerEnd = gptTimerEnd;
+window.gptAIDialog = gptAIDialog;
 
